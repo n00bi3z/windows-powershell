@@ -9,7 +9,8 @@
     $Date= Get-Date -UFormat "%m/%d/%Y"
 
 
-#Create List of Offline Printers
+#------------ Create List of Offline Printers--------------------------#
+
 $OfflinePrinters = get-printer -ComputerName $PrintServer -name * | 
 Where-Object { $_.PrinterStatus -eq "Offline" } | 
 Select-Object Name,PortName,PrinterStatus,Comment | Sort-Object Name
@@ -134,6 +135,7 @@ $Date= Get-Date -UFormat "%m/%d/%Y"
 $current_date = Get-Date
 
 #Create List of Offline Printers
+#TODO: A little redundent to get list of offline printers again, just being safe. Will change later
 $OfflinePrinters = get-printer -ComputerName $PrintServer -name * | 
 Where-Object { $_.PrinterStatus -eq "Offline" } | 
 Select-Object Name,PortName,PrinterStatus,Comment | Sort-Object Name
