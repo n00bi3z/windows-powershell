@@ -123,3 +123,68 @@ $Date= Get-Date -UFormat "%Y-%m-%d_%H-%m-%S"
 #Export List of Offline Printers
 $OnlinePrinters | export-csv "C:\users\select your folder location\name_the_csv.CSV" -NoTypeInformation
 
+
+
+#---------------------- Delete printers ----------------------------------#
+
+
+
+#Get Current Date
+$Date= Get-Date -UFormat "%m/%d/%Y"
+$current_date = Get-Date
+
+#Create List of Offline Printers
+$OfflinePrinters = get-printer -ComputerName $PrintServer -name * | 
+Where-Object { $_.PrinterStatus -eq "Offline" } | 
+Select-Object Name,PortName,PrinterStatus,Comment | Sort-Object Name
+
+
+#---Test if printer has already been commented with "Ready"------#
+
+
+$string = "Tracking Offline"
+
+
+#--------------------------------#
+
+
+$del_printers = [System.Collections.ArrayList]@()
+
+
+ForEach ($OfflinePrinter in $OfflinePrinters) {
+    $printer_comment = $OfflinePrinter.Comment
+    $check_inuse = "This printer is still in use"
+
+    If ($printer_comment.Contains($string) -and !($printer_comment.Contains($check_inuse))){
+        $extract_string = $OfflinePrinter.Comment
+        $extract_date = [DateTime]$extract_string.SubString($extract_string.IndexOf($string) + 17)
+        
+        if ($extract_date.AddDays(60) -lt $current_date) {
+            #add printer to del_printers array
+            $del_printers.Add($OfflinePrinter)
+        }
+    }
+}
+
+
+#Change date format to add at end of csv file
+$Date= Get-Date -UFormat "%Y-%m-%d_%H-%m-%S"
+
+#Export List of deleted Printers
+#I chose to append to existing csv because have multiple csv's can be a pain to search through if looking for
+#details from a deleted printer
+$del_printers | export-csv "C:\user\select your folder location\name_the_csv.CSV" -NoTypeInformation -Append
+
+
+
+#Delete printers that have been offline for over 60 days and confirm
+ForEach ($printer in $del_printers){
+    
+    Remove-Printer -Name $printer.Name -ComputerName $PrintServer -Confirm
+
+    #It looks like port was deleted also. Will need to confirm after running script
+    #Remove-PrinterPort -Name $printer.Name -ComputerName $PrintServer -Confirm
+
+    }
+
+
